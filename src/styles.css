@@ -1,0 +1,276 @@
+/* The popover panel. The window itself is transparent; this sheet draws the
+   rounded surface, so the radius here is the app's visible shape. */
+
+:root {
+  --panel: #1c1c1f;
+  --panel-raised: #26262a;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f4f4f5;
+  --muted: rgba(244, 244, 245, 0.55);
+  --blue: #296ff0;
+  --green: #4ade80;
+  --red: #f87171;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: transparent;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.panel {
+  height: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+}
+
+.view[hidden] {
+  display: none;
+}
+
+.view.wide {
+  justify-content: flex-start;
+  align-items: stretch;
+  text-align: left;
+  padding: 14px;
+  gap: 0;
+}
+
+h1 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.subtle {
+  font-size: 11px;
+}
+
+.error {
+  color: var(--red);
+  font-size: 12px;
+}
+
+/* The three-bar logo mark, in brand blue. */
+.mark {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 34px;
+  margin-bottom: 6px;
+}
+
+.mark span {
+  width: 9px;
+  border-radius: 3px;
+  background: var(--blue);
+}
+
+.mark span:nth-child(1) {
+  height: 16px;
+}
+.mark span:nth-child(2) {
+  height: 34px;
+}
+.mark span:nth-child(3) {
+  height: 24px;
+}
+
+button {
+  font: inherit;
+  border: none;
+  cursor: pointer;
+}
+
+.primary {
+  margin-top: 8px;
+  background: var(--blue);
+  color: #fff;
+  font-weight: 500;
+  padding: 8px 22px;
+  border-radius: 10px;
+  transition: filter 0.15s ease;
+}
+
+.primary:hover {
+  filter: brightness(1.1);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--muted);
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+/* Device-flow user code: the one thing the person has to compare. */
+.code {
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  padding: 10px 18px;
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner.small {
+  width: 15px;
+  height: 15px;
+  border-width: 2px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+/* Signed-in layout */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#site-select {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 5px 8px;
+  max-width: 190px;
+  outline: none;
+}
+
+.live {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 18px 0 14px;
+}
+
+.live-count {
+  font-size: 56px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.live-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background 0.3s ease;
+}
+
+.dot.live {
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.7);
+}
+
+.today {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+
+.today > div {
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.today dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.today dd {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}

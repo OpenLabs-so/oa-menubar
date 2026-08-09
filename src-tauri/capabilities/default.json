@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The popover window's surface: core APIs plus event listening.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

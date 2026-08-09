@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Analytics</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="panel">
+      <!-- Checking the keychain on launch -->
+      <section id="view-loading" class="view">
+        <div class="spinner" aria-label="Loading"></div>
+      </section>
+
+      <!-- Signed out -->
+      <section id="view-login" class="view" hidden>
+        <div class="mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <h1>Open Analytics</h1>
+        <p class="muted">Your live visitors, one glance away.</p>
+        <button id="login-button" class="primary">Sign in</button>
+        <p id="login-error" class="error" hidden></p>
+      </section>
+
+      <!-- Waiting for the browser approval -->
+      <section id="view-code" class="view" hidden>
+        <p class="muted">Confirm this code in your browser</p>
+        <p id="user-code" class="code"></p>
+        <div class="spinner small" aria-label="Waiting for approval"></div>
+        <p class="muted subtle">The approval page opened in your browser.</p>
+      </section>
+
+      <!-- Signed in -->
+      <section id="view-live" class="view wide" hidden>
+        <header class="bar">
+          <select id="site-select" aria-label="Site"></select>
+          <button id="logout-button" class="ghost" title="Sign out">Sign out</button>
+        </header>
+
+        <div class="live">
+          <p class="live-count"><span id="live-count">0</span></p>
+          <p class="live-label"><span class="dot" id="live-dot"></span><span id="live-status">connecting</span></p>
+        </div>
+
+        <dl class="today">
+          <div>
+            <dt>Visitors today</dt>
+            <dd id="today-visitors">…</dd>
+          </div>
+          <div>
+            <dt>Pageviews today</dt>
+            <dd id="today-pageviews">…</dd>
+          </div>
+        </dl>
+
+        <footer class="bar">
+          <button id="dashboard-button" class="ghost">Open dashboard</button>
+        </footer>
+      </section>
+    </main>
+    <script src="main.js"></script>
+  </body>
+</html>

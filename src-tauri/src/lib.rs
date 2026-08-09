@@ -71,15 +71,14 @@ async fn auth_status(state: tauri::State<'_, AppState>) -> Result<AuthStatus, St
     })
 }
 
-/// Registers the client if needed, starts a device authorization, and opens
-/// the verification page in the default browser. Returns the user code for
-/// the popover to display.
+/// Starts a device authorization and opens the verification page in the
+/// default browser. Returns the user code for the popover to display.
 #[tauri::command]
 async fn login_begin(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
 ) -> Result<auth::DeviceAuthorization, String> {
-    let client_id = auth::ensure_client_id(&state.http, &state.api_base).await?;
+    let client_id = auth::client_id();
     let authorization =
         auth::start_device_authorization(&state.http, &state.api_base, &client_id).await?;
 

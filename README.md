@@ -11,9 +11,8 @@ megabytes and idles quietly.
 
 The app talks only to the public Open Analytics API surfaces:
 
-- It registers itself once as a public OAuth client (RFC 7591 dynamic client
-  registration), then signs you in with the device flow (RFC 8628): a short
-  code, a browser approval, done. No password ever touches the app.
+- It signs you in with the OAuth device flow (RFC 8628): a short code, a
+  browser approval, done. No password ever touches the app.
 - Tokens are stored in the macOS keychain, never on disk.
 - Data comes from the read API (`/v1/read/*`) and the realtime stream, with
   read-only scopes: `site:read analytics:read realtime:read revenue:read`.

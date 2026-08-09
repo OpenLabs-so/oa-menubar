@@ -1,10 +1,7 @@
-//! OAuth against the Open Analytics API: dynamic client registration
-//! (RFC 7591), the device flow (RFC 8628), and refresh.
-//!
-//! The app is a public client. It registers itself once, keeps the issued
-//! `client_id` in the keychain, and from then on logs in exactly the way the
-//! `oa` CLI does: a user code, a browser approval, a token pair. Tokens live
-//! in the macOS keychain, never in a file.
+//! OAuth against the Open Analytics API: the device flow (RFC 8628) and
+//! refresh, exactly the way the `oa` CLI signs in: a user code, a browser
+//! approval, a token pair. Tokens live in the macOS keychain, never in a
+//! file.
 
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -17,8 +14,16 @@ pub const DASHBOARD_URL: &str = "https://app.getopen.so";
 /// mint stream tokens; the rest feed the popover's summary.
 pub const SCOPES: &str = "site:read analytics:read realtime:read revenue:read";
 
-/// Shown on the consent page, so the person approving sees what is asking.
-pub const CLIENT_NAME: &str = "Open Analytics Menu Bar";
+/// The server gates the device flow to first-party clients, and dynamically
+/// registered clients are not in that list: the app borrows the CLI's
+/// registration until `oa-menubar` ships as its own first-party client.
+/// `OA_CLIENT_ID` overrides for testing against another deployment.
+pub fn client_id() -> String {
+    std::env::var("OA_CLIENT_ID")
+        .ok()
+        .filter(|v| !v.is_empty())
+        .unwrap_or_else(|| "oa-cli".to_string())
+}
 
 const KEYCHAIN_SERVICE: &str = "so.getopen.menubar";
 const DEVICE_GRANT: &str = "urn:ietf:params:oauth:grant-type:device_code";
@@ -58,55 +63,11 @@ pub fn save_auth(auth: &StoredAuth) -> Result<(), String> {
     entry("oauth")?.set_password(&raw).map_err(|e| e.to_string())
 }
 
-/// Forgets the tokens and only the tokens. The registered `client_id` stays:
-/// registration is anonymous and there is nothing to revoke.
+/// Forgets the tokens and only the tokens; there is nothing else to revoke.
 pub fn clear_auth() {
     if let Ok(e) = entry("oauth") {
         let _ = e.delete_credential();
     }
-}
-
-/// The keychain-cached `client_id`, registering one via DCR on first run.
-pub async fn ensure_client_id(http: &reqwest::Client, api_base: &str) -> Result<String, String> {
-    if let Ok(e) = entry("client-id") {
-        if let Ok(id) = e.get_password() {
-            if !id.is_empty() {
-                return Ok(id);
-            }
-        }
-    }
-
-    // The redirect URI is required by RFC 7591 but never driven: the device
-    // flow has no redirect. The homepage is the honest placeholder.
-    let body = serde_json::json!({
-        "client_name": CLIENT_NAME,
-        "redirect_uris": ["https://getopen.so/"],
-        "token_endpoint_auth_method": "none",
-        "grant_types": ["authorization_code", "refresh_token"],
-        "response_types": ["code"],
-        "scope": SCOPES,
-    });
-    let response = http
-        .post(format!("{api_base}/v1/oauth/register"))
-        .json(&body)
-        .send()
-        .await
-        .map_err(net_err)?;
-    if !response.status().is_success() {
-        return Err(format!(
-            "Client registration was refused ({})",
-            response.status()
-        ));
-    }
-    let parsed: serde_json::Value = response.json().await.map_err(net_err)?;
-    let id = parsed["client_id"]
-        .as_str()
-        .ok_or("The registration answer carried no client_id")?
-        .to_string();
-    entry("client-id")?
-        .set_password(&id)
-        .map_err(|e| e.to_string())?;
-    Ok(id)
 }
 
 /// What `login_begin` hands the popover. The `device_code` stays in Rust.

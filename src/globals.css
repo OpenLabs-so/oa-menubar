@@ -1,0 +1,216 @@
+/* The product's design system, ported from openanalytics
+   apps/web/app/globals.css. Light and dark follow the system: Tailwind v4's
+   default `dark:` variant is media-based, and the same media query flips the
+   tokens below. */
+
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --ink: #292929;
+  --background: #f6f6f6;
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --border: color-mix(in srgb, var(--ink) 12%, transparent);
+  --input: color-mix(in srgb, var(--ink) 14%, transparent);
+  --muted: color-mix(in srgb, var(--ink) 5%, transparent);
+  --muted-foreground: #6d6d6d;
+  --accent: color-mix(in srgb, var(--ink) 5%, transparent);
+  --accent-foreground: var(--ink);
+  --secondary: #e9e9e9;
+  --secondary-foreground: var(--ink);
+  --primary: #305dde;
+  --primary-foreground: #ffffff;
+  --ring: #3ba6f1;
+  --success: var(--color-emerald-600);
+  --success-foreground: var(--color-emerald-700);
+  --warning: var(--color-amber-500);
+  --warning-foreground: var(--color-amber-700);
+  --destructive: var(--color-red-500);
+  --destructive-foreground: var(--color-red-700);
+  --radius: 0.625rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #ededed;
+    --background: #191919;
+    --card: #212121;
+    --popover: #242424;
+    --border: color-mix(in srgb, var(--ink) 14%, transparent);
+    --input: color-mix(in srgb, var(--ink) 16%, transparent);
+    --muted: color-mix(in srgb, var(--ink) 5%, transparent);
+    --muted-foreground: #969696;
+    --accent: color-mix(in srgb, var(--ink) 6%, transparent);
+    --secondary: #2e2e2e;
+    --primary: #296ff0;
+    --success: var(--color-emerald-500);
+    --success-foreground: var(--color-emerald-400);
+    --warning-foreground: var(--color-amber-400);
+    --destructive: color-mix(in srgb, var(--color-red-500) 90%, var(--color-white));
+    --destructive-foreground: var(--color-red-400);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    /* The window is transparent; the panel draws the app's visible shape. */
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+    -webkit-font-smoothing: antialiased;
+    @apply font-sans text-sm text-foreground;
+  }
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-mono);
+  }
+  /* Brand rule: no semibold/bold anywhere; medium is the heaviest weight. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 400;
+  }
+  strong,
+  b {
+    font-weight: 500;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 45%, transparent);
+  }
+}
+
+@layer utilities {
+  /* Apple-style continuous corners where `shape()` exists; the rounded-*
+     class underneath is the fallback everywhere else. Same recipe as the
+     web app's SquircleSurface; radius/handle come in via the
+     [--clip-r:..px] / [--clip-h:..px] arbitrary properties. */
+  .squircle {
+    --clip-r: 14px;
+    --clip-h: 2.25px;
+    clip-path: shape(
+      from var(--clip-r) 0px,
+      line to calc(100% - var(--clip-r)) 0px,
+      curve to 100% var(--clip-r) with calc(100% - var(--clip-h)) 0px / 100%
+        var(--clip-h),
+      line to 100% calc(100% - var(--clip-r)),
+      curve to calc(100% - var(--clip-r)) 100% with 100%
+        calc(100% - var(--clip-h)) / calc(100% - var(--clip-h)) 100%,
+      line to var(--clip-r) 100%,
+      curve to 0px calc(100% - var(--clip-r)) with var(--clip-h) 100% / 0px
+        calc(100% - var(--clip-h)),
+      line to 0px var(--clip-r),
+      curve to var(--clip-r) 0px with 0px var(--clip-h) / var(--clip-h) 0px,
+      close
+    );
+  }
+
+  /* Skeleton reveal: content comes into focus as it arrives. The permanent
+     blur(0) keeps the composited layer alive so the animation's end never
+     repaints as a blink (see the web app's globals for the full story). */
+  .skel-in {
+    filter: blur(0);
+    animation: skel-in 400ms ease-in-out;
+  }
+  @keyframes skel-in {
+    from {
+      opacity: 0;
+      filter: blur(3px);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  /* Brand loader: each band brightens in turn, offset per band. */
+  .brand-band {
+    opacity: 0.22;
+    animation: brand-band 1.2s ease-in-out infinite;
+  }
+  @keyframes brand-band {
+    0%,
+    25%,
+    100% {
+      opacity: 0.22;
+    }
+    12% {
+      opacity: 1;
+    }
+  }
+
+  /* The live dot's slow breath. */
+  .bp-pulse {
+    animation: bp-pulse 2s ease-in-out infinite;
+  }
+  @keyframes bp-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skel-in,
+    .brand-band,
+    .bp-pulse {
+      animation: none;
+    }
+    .brand-band {
+      opacity: 1;
+    }
+  }
+}

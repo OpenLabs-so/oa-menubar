@@ -97,17 +97,49 @@ function paint(canvas, coverageAt, colorAt) {
   }
 }
 
-// The three-bar mark, shared by the app icon and the tray icon.
-function barsFor(size, { barWidth, gap, radius, baseline, heights }) {
-  const total = barWidth * 3 + gap * 2;
-  const x0 = (size - total) / 2;
-  return heights.map((height, index) => ({
-    x: x0 + index * (barWidth + gap),
-    y: baseline - height,
-    w: barWidth,
-    h: height,
-    r: radius,
-  }));
+// ----------------------------------------------------------- brand mark
+//
+// The striped "O", same geometry as the web app's `components/landing/
+// logo.tsx` (source of truth: web-app-manifest-512x512.png): horizontal
+// bands over a ring, a solid base under them, on a 512 grid. Ink is the
+// intersection of the ring and the stripe pattern.
+
+const MARK_GRID = 512;
+const BAND_TOPS = [4, 36, 68, 100, 132, 164, 196, 228, 260, 292];
+const BAND_HEIGHT = 20;
+const BASE_TOP = 324;
+const RING_CENTER = 256;
+const RING_OUTER = 252;
+const RING_INNER = 141;
+
+/**
+ * Coverage of the mark at a device pixel. `scale` maps mark units to device
+ * pixels, `ox`/`oy` place the mark's top-left corner. Circle edges get ~1px
+ * of antialiasing in device space; band edges get exact vertical coverage.
+ */
+function markCoverage(px, py, ox, oy, scale) {
+  const u = (px - ox) / scale;
+  const v = (py - oy) / scale;
+  if (u < -1 || v < -1 || u > MARK_GRID + 1 || v > MARK_GRID + 1) return 0;
+
+  const distance = Math.hypot(u - RING_CENTER, v - RING_CENTER);
+  const outer = Math.min(Math.max(0.5 - (distance - RING_OUTER) * scale, 0), 1);
+  const inner = Math.min(Math.max(0.5 - (distance - RING_INNER) * scale, 0), 1);
+  const ring = Math.min(outer, 1 - inner);
+  if (ring <= 0) return 0;
+
+  // Vertical coverage of the pixel footprint against the stripe intervals.
+  const half = 0.5 / scale;
+  const lo = v - half;
+  const hi = v + half;
+  let covered = 0;
+  for (const top of BAND_TOPS) {
+    covered += Math.max(0, Math.min(hi, top + BAND_HEIGHT) - Math.max(lo, top));
+  }
+  covered += Math.max(0, Math.min(hi, MARK_GRID + 2) - Math.max(lo, BASE_TOP));
+  const stripes = Math.min(covered / (half * 2), 1);
+
+  return ring * stripes;
 }
 
 // ------------------------------------------------------------- app icon
@@ -119,8 +151,8 @@ const app = makeCanvas(APP);
 // icons are so the rounded square floats on transparency.
 const inset = 100;
 const plate = { x: inset, y: inset, w: APP - inset * 2, h: APP - inset * 2, r: 210 };
-const top = [0x3d, 0x84, 0xf7];
-const bottom = [0x1c, 0x5a, 0xd4];
+const top = [0x3f, 0x83, 0xf8];
+const bottom = [0x21, 0x59, 0xd8];
 paint(
   app,
   (px, py) => roundedRectCoverage(px, py, plate.x, plate.y, plate.w, plate.h, plate.r),
@@ -130,19 +162,15 @@ paint(
   }
 );
 
-for (const bar of barsFor(APP, {
-  barWidth: 118,
-  gap: 58,
-  radius: 40,
-  baseline: 726,
-  heights: [236, 460, 336],
-})) {
-  paint(
-    app,
-    (px, py) => roundedRectCoverage(px, py, bar.x, bar.y, bar.w, bar.h, bar.r),
-    () => [255, 255, 255]
-  );
-}
+// The mark in white, centered on the plate.
+const APP_MARK = 500;
+const appScale = APP_MARK / MARK_GRID;
+const appOffset = (APP - APP_MARK) / 2;
+paint(
+  app,
+  (px, py) => markCoverage(px, py, appOffset, appOffset, appScale),
+  () => [255, 255, 255]
+);
 
 mkdirSync(iconsDir, { recursive: true });
 writeFileSync(join(iconsDir, "icon.png"), encodePng(APP, APP, app.data));
@@ -151,21 +179,18 @@ writeFileSync(join(iconsDir, "icon.png"), encodePng(APP, APP, app.data));
 
 // A template image: pure black, alpha carries the shape, macOS recolors it
 // for light and dark menu bars. 44px so the 22pt slot gets a 2x bitmap.
+// At this size the bands render as a fine texture — the dithered ring the
+// brand already uses elsewhere.
 const TRAY = 44;
+const TRAY_MARK = 36;
 const tray = makeCanvas(TRAY);
-for (const bar of barsFor(TRAY, {
-  barWidth: 7,
-  gap: 4,
-  radius: 2.4,
-  baseline: 35,
-  heights: [13, 26, 19],
-})) {
-  paint(
-    tray,
-    (px, py) => roundedRectCoverage(px, py, bar.x, bar.y, bar.w, bar.h, bar.r),
-    () => [0, 0, 0]
-  );
-}
+const trayScale = TRAY_MARK / MARK_GRID;
+const trayOffset = (TRAY - TRAY_MARK) / 2;
+paint(
+  tray,
+  (px, py) => markCoverage(px, py, trayOffset, trayOffset, trayScale),
+  () => [0, 0, 0]
+);
 writeFileSync(join(iconsDir, "tray.png"), encodePng(TRAY, TRAY, tray.data));
 
 // ---------------------------------------------------------------- .icns

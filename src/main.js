@@ -99,16 +99,18 @@ async function watchSite(siteId) {
 }
 
 async function refreshToday(siteId) {
+  // The read API takes full ISO-8601 UTC instants, never date-only strings:
+  // today is local midnight to now, both said as instants, with the zone
+  // sent alongside so the server buckets on the same calendar we live in.
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  const day = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   try {
     const body = await invoke("overview", {
       siteId,
-      from: day,
-      to: day,
+      from: startOfDay.toISOString(),
+      to: now.toISOString(),
       timezone,
     });
     const totals = body.totals ?? {};

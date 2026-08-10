@@ -178,11 +178,11 @@ writeFileSync(join(iconsDir, "icon.png"), encodePng(APP, APP, app.data));
 // ------------------------------------------------------------ tray icon
 
 // A template image: pure black, alpha carries the shape, macOS recolors it
-// for light and dark menu bars. 44px so the 22pt slot gets a 2x bitmap.
-// At this size the bands render as a fine texture — the dithered ring the
-// brand already uses elsewhere.
+// for light and dark menu bars. The tray-icon crate scales the WHOLE image
+// to 18pt, padding included, so the mark is drawn full-bleed: any margin
+// here would only shrink the visible glyph below its neighbours.
 const TRAY = 44;
-const TRAY_MARK = 36;
+const TRAY_MARK = 44;
 const tray = makeCanvas(TRAY);
 const trayScale = TRAY_MARK / MARK_GRID;
 const trayOffset = (TRAY - TRAY_MARK) / 2;

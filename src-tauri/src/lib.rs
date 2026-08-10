@@ -55,7 +55,9 @@ impl AppState {
 /// The number beside the tray icon. `None` clears it back to icon-only.
 pub fn set_tray_count(app: &AppHandle, count: Option<u64>) {
     if let Some(tray) = app.tray_by_id(TRAY_ID) {
-        let _ = tray.set_title(count.map(|n| n.to_string()));
+        // The leading space is the gap between the template icon and the
+        // title: NSStatusBarButton butts them together otherwise.
+        let _ = tray.set_title(count.map(|n| format!(" Live: {n}")));
     }
 }
 
@@ -246,6 +248,22 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             build_tray(app.handle())?;
+            // Native glass: an NSVisualEffectView popover material behind the
+            // webview. The webview paints a translucent tint over it, so the
+            // panel frosts whatever is behind the popover. The radius matches
+            // the panel's 26px corners so the native layer never peeks out.
+            #[cfg(target_os = "macos")]
+            if let Some(window) = app.get_webview_window("main") {
+                use window_vibrancy::{
+                    apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState,
+                };
+                let _ = apply_vibrancy(
+                    &window,
+                    NSVisualEffectMaterial::Popover,
+                    Some(NSVisualEffectState::Active),
+                    Some(26.0),
+                );
+            }
             Ok(())
         })
         .on_window_event(|window, event| {

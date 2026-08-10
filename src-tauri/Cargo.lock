@@ -1297,6 +1297,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-positioner",
  "tokio",
+ "window-vibrancy",
 ]
 
 [[package]]

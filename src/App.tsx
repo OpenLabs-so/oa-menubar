@@ -200,7 +200,7 @@ export default function App() {
   }, [statsSite, interval, refreshOverview]);
 
   return (
-    <main className="squircle fixed inset-0 flex flex-col overflow-hidden rounded-[26px] border border-border bg-card">
+    <main className="squircle fixed inset-0 flex flex-col overflow-hidden rounded-[26px] border border-border bg-transparent">
       <div key={screen.kind} className="skel-in flex min-h-0 flex-1 flex-col">
         {screen.kind === "loading" && <LoadingScreen />}
         {screen.kind === "login" && (

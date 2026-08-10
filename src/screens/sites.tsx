@@ -28,8 +28,8 @@ export function SitesScreen({
   onSignOut: () => void;
 }) {
   return (
-    <div className="flex flex-1 flex-col p-3">
-      <Frame className="flex-1">
+    <div className="flex flex-1 flex-col justify-center p-3">
+      <Frame>
         <FrameStrip
           icon={<HugeiconsIcon icon={Globe02Icon} strokeWidth={1.8} />}
           title="Choose a site"
@@ -39,7 +39,9 @@ export function SitesScreen({
             </Button>
           }
         />
-        <Inset>
+        {/* Four rows and half of a fifth: the cut row is the scroll
+            affordance, so a long account never stretches the card. */}
+        <Inset className="h-[198px] flex-none">
           <div className="h-full overflow-y-auto p-1">
             {loading ? (
               <SiteRowSkeletons />

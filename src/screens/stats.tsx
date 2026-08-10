@@ -24,16 +24,42 @@ import {
   intervalLabel,
   type IntervalKey,
 } from "@/lib/interval";
-import type { OverviewTotals, SiteSummary } from "@/lib/tauri";
+import type {
+  OverviewTotals,
+  SessionTotals,
+  SiteSummary,
+} from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 
 export type LiveStatus = "connecting" | "live" | "offline";
 
 /** Metrics are totals, a quiet dash on failure, skeletons while loading. */
 export type TotalsState = OverviewTotals | "loading" | "error";
+export type SessionsState = SessionTotals | "loading" | "error";
 
 const fmt = (n: number | undefined) =>
   typeof n === "number" ? n.toLocaleString("en-US") : "0";
+
+/** 93s -> "1m 33s", 3670s -> "1h 1m"; sub-minute keeps seconds only. */
+function fmtDuration(ms: number | undefined): string {
+  const total = Math.round((ms ?? 0) / 1000);
+  if (total < 60) return `${total}s`;
+  const minutes = Math.floor(total / 60);
+  if (minutes < 60) return `${minutes}m ${total % 60}s`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
+const fmtPercent = (rate: number | undefined) =>
+  `${Math.round((rate ?? 0) * 100)}%`;
+
+/** A row's display value: pass loading/error through, format data. */
+function metricValue<T extends object>(
+  state: T | "loading" | "error",
+  render: (data: T) => string
+): string | "loading" | "error" {
+  if (state === "loading" || state === "error") return state;
+  return render(state);
+}
 
 const STATE_WORD: Partial<Record<SiteSummary["status"], string>> = {
   billing_blocked: "Paused",
@@ -48,6 +74,7 @@ export function StatsScreen({
   live,
   liveStatus,
   totals,
+  sessions,
   onSelectSite,
   onAllSites,
   onSignOut,
@@ -60,6 +87,7 @@ export function StatsScreen({
   live: number;
   liveStatus: LiveStatus;
   totals: TotalsState;
+  sessions: SessionsState;
   onSelectSite: (site: SiteSummary) => void;
   onAllSites: () => void;
   onSignOut: () => void;
@@ -79,7 +107,7 @@ export function StatsScreen({
         <IntervalSelect value={interval} onSelect={onSelectInterval} />
       </header>
 
-      <div className="flex flex-col items-center gap-0.5 pb-1 pt-3.5">
+      <div className="flex flex-col items-center gap-0.5 pb-1 pt-6.5">
         <p className="text-[42px] font-medium leading-[1.1] tracking-tight tabular-nums">
           {fmt(live)}
         </p>
@@ -93,20 +121,43 @@ export function StatsScreen({
               liveStatus === "connecting" && "bg-muted-foreground/50"
             )}
           />
-          {liveStatus}
+          {liveStatus === "live"
+            ? "Live users right now"
+            : liveStatus === "connecting"
+              ? "Connecting"
+              : "Offline"}
         </p>
       </div>
 
-      <Frame className="mt-2.5">
+      <Frame className="mt-4">
         <FrameStrip
           icon={<HugeiconsIcon icon={Analytics02Icon} strokeWidth={1.8} />}
           title={intervalLabel(interval)}
         />
         <Inset>
           <dl className="py-1">
-            <Metric label="Visitors" value={totals} pick="visitors" />
-            <Metric label="Pageviews" value={totals} pick="pageviews" />
-            <Metric label="Events" value={totals} pick="events" />
+            <Metric
+              label="Visitors"
+              value={metricValue(totals, (t) => fmt(t.visitors))}
+            />
+            <Metric
+              label="Pageviews"
+              value={metricValue(totals, (t) => fmt(t.pageviews))}
+            />
+            <Metric
+              label="Events"
+              value={metricValue(totals, (t) => fmt(t.events))}
+            />
+            <Metric
+              label="Avg duration"
+              value={metricValue(sessions, (s) =>
+                fmtDuration(s.avg_session_duration_ms)
+              )}
+            />
+            <Metric
+              label="Bounce rate"
+              value={metricValue(sessions, (s) => fmtPercent(s.bounce_rate))}
+            />
           </dl>
         </Inset>
       </Frame>
@@ -128,11 +179,9 @@ export function StatsScreen({
 function Metric({
   label,
   value,
-  pick,
 }: {
   label: string;
-  value: TotalsState;
-  pick: keyof OverviewTotals;
+  value: string | "loading" | "error";
 }) {
   return (
     <div className="flex h-[34px] items-center justify-between px-3.5 text-[13px]">
@@ -143,7 +192,7 @@ function Metric({
         ) : value === "error" ? (
           <span className="text-muted-foreground">–</span>
         ) : (
-          <span className="skel-in inline-block">{fmt(value[pick])}</span>
+          <span className="skel-in inline-block">{value}</span>
         )}
       </dd>
     </div>
@@ -311,13 +360,13 @@ function IntervalSelect({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => (open ? close() : setOpen(true))}
-        className="flex h-8 cursor-pointer items-center gap-1 rounded-full border border-border bg-card pl-3 pr-2 text-[13px] shadow-xs outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="flex h-8 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm font-medium outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
       >
         {intervalLabel(value)}
         <HugeiconsIcon
           icon={MoreVerticalCircle01Icon}
           strokeWidth={1.8}
-          className="size-4 shrink-0 text-muted-foreground"
+          className="size-3.5 shrink-0 text-muted-foreground"
         />
       </button>
 

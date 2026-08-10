@@ -22,6 +22,18 @@ export type OverviewTotals = {
   billable_events?: number;
 };
 
+/** `/v1/read/analytics/sessions` totals, verified against production. */
+export type SessionTotals = {
+  sessions?: number;
+  engaged_sessions?: number;
+  bounced_sessions?: number;
+  /** 0..1 */
+  bounce_rate?: number;
+  pageviews?: number;
+  avg_session_duration_ms?: number;
+  avg_active_duration_ms?: number;
+};
+
 export type DeviceAuthorization = {
   user_code: string;
   verification_uri: string;
@@ -43,6 +55,12 @@ export const api = {
     to: string;
     timezone: string;
   }) => invoke<{ totals?: OverviewTotals }>("overview", args),
+  sessions: (args: {
+    siteId: string;
+    from: string;
+    to: string;
+    timezone: string;
+  }) => invoke<{ totals?: SessionTotals }>("sessions", args),
   realtimeStart: (siteId: string) =>
     invoke<void>("realtime_start", { siteId }),
   realtimeStop: () => invoke<void>("realtime_stop"),

@@ -167,6 +167,30 @@ async fn overview(
 }
 
 #[tauri::command]
+async fn sessions(
+    state: tauri::State<'_, AppState>,
+    site_id: String,
+    from: String,
+    to: String,
+    timezone: String,
+) -> Result<serde_json::Value, String> {
+    let token = auth::fresh_access_token(&state.http, &state.api_base, &state.auth).await?;
+    api::read_get(
+        &state.http,
+        &state.api_base,
+        &token,
+        Some(&site_id),
+        "/v1/read/analytics/sessions",
+        &[
+            ("from", from.as_str()),
+            ("to", to.as_str()),
+            ("timezone", timezone.as_str()),
+        ],
+    )
+    .await
+}
+
+#[tauri::command]
 async fn realtime_start(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
@@ -281,6 +305,7 @@ pub fn run() {
             logout,
             list_sites,
             overview,
+            sessions,
             realtime_start,
             realtime_stop,
             open_dashboard

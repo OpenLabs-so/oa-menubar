@@ -6,6 +6,7 @@ import { SitesScreen } from "@/screens/sites";
 import {
   StatsScreen,
   type LiveStatus,
+  type SessionsState,
   type TotalsState,
 } from "@/screens/stats";
 import {
@@ -42,6 +43,7 @@ export default function App() {
   const [live, setLive] = React.useState(0);
   const [liveStatus, setLiveStatus] = React.useState<LiveStatus>("connecting");
   const [totals, setTotals] = React.useState<TotalsState>("loading");
+  const [sessions, setSessions] = React.useState<SessionsState>("loading");
 
   // Drops overview answers that arrive for a stale site/interval pick, and
   // remembers when the metrics were last fresh (for the focus refresh).
@@ -96,28 +98,45 @@ export default function App() {
   }, [showSites]);
 
   const refreshOverview = React.useCallback(
-    async (site: SiteSummary, key: IntervalKey) => {
+    (site: SiteSummary, key: IntervalKey) => {
       const token = ++overviewToken.current;
       setTotals("loading");
+      setSessions("loading");
       const range = rangeForInterval(key);
-      try {
-        const body = await api.overview({
-          siteId: site.site_id,
-          from: range.from,
-          to: range.to,
-          timezone: range.timezone,
+      const args = {
+        siteId: site.site_id,
+        from: range.from,
+        to: range.to,
+        timezone: range.timezone,
+      };
+      // Two independent reads: a failed sessions summary must not dash the
+      // overview rows, and vice versa. The token drops stale answers.
+      api
+        .overview(args)
+        .then((body) => {
+          if (token !== overviewToken.current) return;
+          setTotals(body.totals ?? {});
+          overviewStamp.current = Date.now();
+          storeInterval(key); // re-stamp while the screen is in use
+        })
+        .catch((error) => {
+          if (token !== overviewToken.current) return;
+          if (String(error) === NOT_LOGGED_IN) return signOut();
+          // The live count is the headline; a failed summary shows quiet
+          // dashes rather than replacing it with an error state.
+          setTotals("error");
         });
-        if (token !== overviewToken.current) return;
-        setTotals(body.totals ?? {});
-        overviewStamp.current = Date.now();
-        storeInterval(key); // re-stamp while the screen is in use
-      } catch (error) {
-        if (token !== overviewToken.current) return;
-        if (String(error) === NOT_LOGGED_IN) return signOut();
-        // The live count is the headline; a failed summary shows quiet
-        // dashes rather than replacing it with an error state.
-        setTotals("error");
-      }
+      api
+        .sessions(args)
+        .then((body) => {
+          if (token !== overviewToken.current) return;
+          setSessions(body.totals ?? {});
+        })
+        .catch((error) => {
+          if (token !== overviewToken.current) return;
+          if (String(error) === NOT_LOGGED_IN) return signOut();
+          setSessions("error");
+        });
     },
     [signOut]
   );
@@ -225,6 +244,7 @@ export default function App() {
             live={live}
             liveStatus={liveStatus}
             totals={totals}
+            sessions={sessions}
             onSelectSite={enterStats}
             onAllSites={showSites}
             onSignOut={signOut}
